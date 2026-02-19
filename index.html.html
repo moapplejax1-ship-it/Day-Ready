@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DayReady">
+<meta name="theme-color" content="#111111">
+<title>DayReady</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300;1,9..40,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #111111;
+  --surface: #191919;
+  --surface2: #1f1f1f;
+  --surface3: #252525;
+  --border: #2a2a2a;
+  --border2: #333333;
+  --text: #e8e4df;
+  --text2: #9a958e;
+  --text3: #5c5852;
+  --accent: #c4a882;
+  --accent-dim: rgba(196,168,130,0.08);
+  --green: #8fbf8f;
+  --green-dim: rgba(143,191,143,0.08);
+  --amber: #c9a96e;
+  --amber-dim: rgba(201,169,110,0.08);
+  --red: #c47070;
+  --safe-top: env(safe-area-inset-top, 44px);
+  --safe-bot: env(safe-area-inset-bottom, 34px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; font-weight: 300; }
+.app { display: flex; flex-direction: column; height: 100%; max-width: 430px; margin: 0 auto; }
+.status-bar { height: var(--safe-top); flex-shrink: 0; background: var(--bg); }
+.tab-bar { display: flex; background: var(--bg); border-top: 1px solid var(--border); padding-bottom: var(--safe-bot); flex-shrink: 0; }
+.tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 0 8px; border: none; background: transparent; color: var(--text3); font-family: 'DM Mono', monospace; font-size: 0.56rem; font-weight: 400; letter-spacing: 0.08em; text-transform: lowercase; cursor: pointer; transition: color 0.25s; }
+.tab.active { color: var(--accent); }
+.tab-icon { font-size: 1.15rem; line-height: 1; }
+.pages { flex: 1; overflow: hidden; position: relative; }
+.page { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 24px 20px; display: none; opacity: 0; transform: translateY(4px); transition: opacity 0.3s ease, transform 0.3s ease; }
+.page.active { display: block; opacity: 1; transform: translateY(0); }
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
+.page-title { font-family: 'DM Sans', sans-serif; font-size: 1.5rem; font-weight: 300; letter-spacing: -0.02em; line-height: 1.1; color: var(--text); }
+.page-subtitle { font-size: 0.72rem; color: var(--text3); margin-top: 5px; font-family: 'DM Mono', monospace; font-weight: 300; }
+.time-badge { font-family: 'DM Mono', monospace; font-size: 0.9rem; font-weight: 300; color: var(--text2); text-align: right; line-height: 1.3; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.intention-banner { border-bottom: 1px solid var(--border); padding: 0 0 20px 0; margin-bottom: 20px; animation: fadeIn 0.4s ease backwards; }
+.intention-label { font-family: 'DM Mono', monospace; font-size: 0.6rem; font-weight: 400; letter-spacing: 0.1em; text-transform: lowercase; color: var(--text3); margin-bottom: 10px; }
+.intention-display { font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-style: italic; font-weight: 300; color: var(--text); line-height: 1.6; cursor: pointer; }
+.intention-display.empty { color: var(--text3); font-style: normal; font-size: 0.85rem; }
+.intention-display.editing-mode { display: none; }
+.intention-input-wrap { display: none; }
+.intention-input-wrap.editing { display: block; }
+.intention-input { width: 100%; background: transparent; border: none; outline: none; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-style: italic; font-weight: 300; color: var(--text); line-height: 1.6; resize: none; height: 56px; border-bottom: 1px solid var(--border2); padding-bottom: 6px; margin-bottom: 12px; }
+.intention-input::placeholder { color: var(--text3); font-style: italic; }
+.intention-btn-row { display: flex; gap: 8px; }
+.intention-save { background: var(--accent); border: none; border-radius: 4px; padding: 8px 18px; font-family: 'DM Mono', monospace; font-size: 0.72rem; font-weight: 400; color: var(--bg); cursor: pointer; }
+.intention-cancel { background: transparent; border: 1px solid var(--border2); border-radius: 4px; padding: 8px 16px; font-family: 'DM Mono', monospace; font-size: 0.72rem; font-weight: 400; color: var(--text3); cursor: pointer; }
+.weather-hero { border-bottom: 1px solid var(--border); padding: 0 0 20px 0; position: relative; margin-bottom: 20px; animation: fadeIn 0.4s 0.05s ease backwards; }
+.weather-loading { display: flex; align-items: center; gap: 10px; color: var(--text3); font-size: 0.8rem; padding: 12px 0; font-family: 'DM Mono', monospace; font-weight: 300; }
+.weather-loaded { display: none; }
+.weather-hero.loaded .weather-loading { display: none; }
+.weather-hero.loaded .weather-loaded { display: block; }
+.weather-location { font-family: 'DM Mono', monospace; font-size: 0.6rem; font-weight: 400; letter-spacing: 0.08em; text-transform: lowercase; color: var(--text3); margin-bottom: 12px; }
+.weather-main { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 16px; }
+.weather-temp { font-family: 'DM Sans', sans-serif; font-size: 3.2rem; font-weight: 300; letter-spacing: -0.04em; line-height: 1; color: var(--text); }
+.weather-temp sup { font-size: 1.1rem; font-weight: 300; vertical-align: super; color: var(--text3); }
+.weather-icon-big { font-size: 2.4rem; line-height: 1; opacity: 0.7; }
+.weather-desc { font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 300; color: var(--text2); margin-bottom: 16px; }
+.weather-stats { display: flex; gap: 0; }
+.weather-stat { flex: 1; text-align: left; }
+.weather-stat-val { font-family: 'DM Mono', monospace; font-size: 0.85rem; font-weight: 400; color: var(--text); }
+.weather-stat-lbl { font-size: 0.55rem; color: var(--text3); margin-top: 2px; text-transform: lowercase; letter-spacing: 0.06em; font-family: 'DM Mono', monospace; font-weight: 300; }
+.weather-refresh { position: absolute; top: 0; right: 0; background: none; border: none; padding: 4px; color: var(--text3); cursor: pointer; font-size: 0.85rem; opacity: 0.5; transition: opacity 0.2s; }
+.weather-refresh:hover { opacity: 1; }
+.report-card { border-bottom: 1px solid var(--border); padding: 0 0 20px 0; margin-bottom: 20px; animation: fadeIn 0.4s 0.1s ease backwards; }
+.report-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.report-ai-badge { font-family: 'DM Mono', monospace; font-size: 0.55rem; font-weight: 400; letter-spacing: 0.08em; text-transform: lowercase; color: var(--text3); padding: 2px 6px; border: 1px solid var(--border); border-radius: 2px; }
+.report-title { font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 400; color: var(--text2); }
+.report-section { margin-bottom: 14px; }
+.report-section-title { font-family: 'DM Mono', monospace; font-size: 0.55rem; font-weight: 400; letter-spacing: 0.1em; text-transform: lowercase; color: var(--text3); margin-bottom: 8px; }
+.report-body { font-size: 0.85rem; line-height: 1.7; color: var(--text2); font-weight: 300; }
+.report-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip { background: transparent; border: 1px solid var(--border); border-radius: 3px; padding: 4px 10px; font-size: 0.72rem; color: var(--text2); font-family: 'DM Sans', sans-serif; font-weight: 300; }
+.chip.green { border-color: rgba(143,191,143,0.25); color: var(--green); }
+.chip.accent { border-color: rgba(196,168,130,0.25); color: var(--accent); }
+.chip.amber { border-color: rgba(201,169,110,0.25); color: var(--amber); }
+.report-loading { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px; color: var(--text3); font-size: 0.8rem; text-align: center; font-family: 'DM Mono', monospace; font-weight: 300; }
+.pulse-ring { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--text3); border-top-color: transparent; animation: spin 1.2s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.evening-prep-card { border-bottom: 1px solid var(--border); padding: 0 0 20px 0; margin-bottom: 20px; animation: fadeIn 0.4s 0.15s ease backwards; }
+.evening-prep-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.evening-prep-title { font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 400; color: var(--text2); }
+.evening-prep-badge { font-family: 'DM Mono', monospace; font-size: 0.55rem; font-weight: 400; letter-spacing: 0.08em; text-transform: lowercase; color: var(--text3); padding: 2px 6px; border: 1px solid var(--border); border-radius: 2px; }
+.evening-checklist { display: flex; flex-direction: column; gap: 2px; }
+.evening-item { display: flex; align-items: center; gap: 12px; padding: 11px 0; cursor: pointer; transition: all 0.15s; border-bottom: 1px solid rgba(42,42,42,0.5); }
+.evening-item:last-child { border-bottom: none; }
+.evening-item:active { opacity: 0.7; }
+.evening-check { width: 16px; height: 16px; border-radius: 2px; border: 1px solid var(--border2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 0.6rem; color: transparent; }
+.evening-item.checked .evening-check { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.evening-item.checked .evening-item-text { text-decoration: line-through; color: var(--text3); }
+.evening-item-emoji { font-size: 0.9rem; }
+.evening-item-text { font-size: 0.82rem; color: var(--text2); flex: 1; font-weight: 300; }
+.evening-prep-empty { font-size: 0.8rem; color: var(--text3); font-family: 'DM Sans', sans-serif; font-weight: 300; }
+.week-plan-grid { display: flex; flex-direction: column; gap: 2px; margin-bottom: 20px; }
+.week-plan-row { display: flex; align-items: stretch; background: transparent; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+.week-plan-row:last-child { border-bottom: none; }
+.week-plan-row:active { background: var(--surface); }
+.week-plan-row.today { background: var(--surface); }
+.week-plan-row.has-workout .week-plan-day-num { color: var(--green); }
+.week-plan-row.today .week-plan-day-num { color: var(--accent); }
+.week-plan-day-col { width: 48px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 6px; gap: 1px; }
+.week-plan-day-abbr { font-family: 'DM Mono', monospace; font-size: 0.55rem; font-weight: 400; letter-spacing: 0.06em; text-transform: lowercase; color: var(--text3); }
+.week-plan-row.today .week-plan-day-abbr { color: var(--accent); }
+.week-plan-day-num { font-family: 'DM Mono', monospace; font-size: 1rem; font-weight: 400; color: var(--text2); }
+.week-plan-content { flex: 1; padding: 12px 10px 12px 12px; display: flex; flex-direction: column; justify-content: center; gap: 4px; min-height: 58px; }
+.week-plan-workout-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.week-plan-note { font-size: 0.72rem; color: var(--text3); font-style: italic; font-weight: 300; }
+.week-plan-rest { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--text3); font-weight: 300; }
+.week-plan-add-hint { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--accent); font-weight: 400; }
+.week-plan-edit-col { display: flex; align-items: center; padding-right: 12px; color: var(--text3); font-size: 0.75rem; opacity: 0.4; }
+.week-strip { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; margin-bottom: 22px; scrollbar-width: none; }
+.week-strip::-webkit-scrollbar { display: none; }
+.day-pill { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; width: 46px; padding: 10px 0; border-radius: 4px; border: 1px solid var(--border); background: transparent; cursor: pointer; transition: all 0.2s; position: relative; }
+.day-pill.today { border-color: var(--accent); }
+.day-pill.selected { background: var(--accent); border-color: var(--accent); }
+.day-pill.has-workout::after { content: ''; position: absolute; bottom: 5px; width: 4px; height: 4px; border-radius: 50%; background: var(--green); }
+.day-pill.selected::after { background: var(--bg); }
+.day-pill-abbr { font-family: 'DM Mono', monospace; font-size: 0.52rem; font-weight: 400; letter-spacing: 0.06em; text-transform: lowercase; color: var(--text3); }
+.day-pill.selected .day-pill-abbr { color: rgba(17,17,17,0.6); }
+.day-pill.today:not(.selected) .day-pill-abbr { color: var(--accent); }
+.day-pill-num { font-family: 'DM Mono', monospace; font-size: 0.9rem; font-weight: 400; color: var(--text2); }
+.day-pill.selected .day-pill-num { color: var(--bg); }
+.workout-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 18px; margin-bottom: 18px; display: none; }
+.workout-panel.visible { display: block; animation: fadeIn 0.25s ease; }
+.workout-panel-title { font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 400; margin-bottom: 16px; }
+.workout-types-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; }
+.wtype-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 4px; border-radius: 4px; border: 1px solid var(--border); background: transparent; cursor: pointer; transition: all 0.15s; }
+.wtype-btn.selected { background: var(--green-dim); border-color: rgba(143,191,143,0.35); }
+.wtype-btn-icon { font-size: 1.15rem; }
+.wtype-btn-label { font-family: 'DM Mono', monospace; font-size: 0.52rem; font-weight: 400; letter-spacing: 0.05em; text-transform: lowercase; color: var(--text3); }
+.wtype-btn.selected .wtype-btn-label { color: var(--green); }
+.workout-note { width: 100%; background: transparent; border: 1px solid var(--border); border-radius: 4px; padding: 12px 14px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 300; color: var(--text); resize: none; height: 52px; outline: none; margin-bottom: 12px; transition: border-color 0.2s; }
+.workout-note:focus { border-color: var(--accent); }
+.workout-note::placeholder { color: var(--text3); }
+.btn-row { display: flex; gap: 8px; }
+.btn { flex: 1; padding: 12px; border: none; border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 0.78rem; font-weight: 400; cursor: pointer; transition: all 0.15s; }
+.btn-save { background: var(--accent); color: var(--bg); }
+.btn-save:active { opacity: 0.85; }
+.btn-cancel { background: transparent; color: var(--text3); border: 1px solid var(--border); }
+.workout-week-list { display: flex; flex-direction: column; gap: 2px; }
+.workout-day-row { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); padding: 14px 0; }
+.workout-day-row:last-child { border-bottom: none; }
+.workout-day-label { font-family: 'DM Mono', monospace; font-size: 0.82rem; font-weight: 400; min-width: 40px; color: var(--text2); }
+.workout-day-types { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+.workout-day-del { background: none; border: none; color: var(--text3); font-size: 0.9rem; cursor: pointer; padding: 4px; opacity: 0.5; }
+.pack-section { margin-bottom: 24px; }
+.pack-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.pack-section-day { font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 400; }
+.pack-section-types { display: flex; gap: 6px; }
+.pack-item { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid rgba(42,42,42,0.5); cursor: pointer; -webkit-user-select: none; user-select: none; }
+.pack-item:last-child { border-bottom: none; }
+.pack-item:active { opacity: 0.7; }
+.pack-check { width: 16px; height: 16px; border-radius: 2px; border: 1px solid var(--border2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 0.6rem; color: transparent; }
+.pack-item.checked .pack-check { background: var(--green); border-color: var(--green); color: var(--bg); }
+.pack-item.checked .pack-item-text { text-decoration: line-through; color: var(--text3); }
+.pack-item-emoji { font-size: 0.95rem; }
+.pack-item-text { font-size: 0.82rem; color: var(--text2); flex: 1; font-weight: 300; }
+.dots-loader span { display: inline-block; width: 4px; height: 4px; background: var(--text3); border-radius: 50%; margin: 0 2px; animation: dotPop 1.2s ease-in-out infinite; }
+.dots-loader span:nth-child(2){animation-delay:0.2s} .dots-loader span:nth-child(3){animation-delay:0.4s}
+@keyframes dotPop { 0%,80%,100%{transform:scale(0.5);opacity:0.3} 40%{transform:scale(1);opacity:1} }
+.empty { text-align: center; padding: 36px 20px; color: var(--text3); }
+.empty-icon { font-size: 2rem; margin-bottom: 10px; opacity: 0.5; }
+.empty-text { font-size: 0.82rem; line-height: 1.6; font-family: 'DM Sans', sans-serif; font-weight: 300; }
+.section-label { font-family: 'DM Mono', monospace; font-size: 0.55rem; font-weight: 400; letter-spacing: 0.1em; text-transform: lowercase; color: var(--text3); margin-bottom: 10px; margin-top: 22px; }
+.section-label:first-child { margin-top: 0; }
+.page-bottom { height: 24px; }
+.toast { position: fixed; bottom: calc(var(--safe-bot) + 72px); left: 50%; transform: translateX(-50%) translateY(16px); background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; padding: 9px 18px; font-family: 'DM Mono', monospace; font-size: 0.75rem; font-weight: 400; color: var(--text); pointer-events: none; opacity: 0; transition: all 0.28s ease; white-space: nowrap; z-index: 999; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="status-bar"></div>
+  <div class="pages">
+
+    <!-- MORNING -->
+    <div class="page active" id="page-morning">
+      <div class="page-header">
+        <div><div class="page-title">Good Morning</div><div class="page-subtitle" id="morningDate">—</div></div>
+        <div class="time-badge" id="morningTime">—</div>
+      </div>
+
+      <div class="intention-banner">
+        <div class="intention-label">intention</div>
+        <div class="intention-display empty" id="intentionDisplay" onclick="startEditIntention()">Tap to set your intention for today...</div>
+        <div class="intention-input-wrap" id="intentionInputWrap">
+          <textarea class="intention-input" id="intentionInput" placeholder="What do you want to focus on today?" maxlength="140"></textarea>
+          <div class="intention-btn-row">
+            <button class="intention-save" onclick="saveIntention()">set</button>
+            <button class="intention-cancel" onclick="cancelIntention()">cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="weather-hero" id="weatherHero">
+        <button class="weather-refresh" onclick="loadWeather()">↻</button>
+        <div class="weather-loading"><div class="dots-loader"><span></span><span></span><span></span></div><span>fetching weather...</span></div>
+        <div class="weather-loaded">
+          <div class="weather-location" id="weatherLocation">—</div>
+          <div class="weather-main">
+            <div><div class="weather-temp" id="weatherTemp">—<sup>°F</sup></div><div class="weather-desc" id="weatherDesc">—</div></div>
+            <div class="weather-icon-big" id="weatherIcon">🌤</div>
+          </div>
+          <div class="weather-stats">
+            <div class="weather-stat"><div class="weather-stat-val" id="statFeels">—</div><div class="weather-stat-lbl">feels like</div></div>
+            <div class="weather-stat"><div class="weather-stat-val" id="statHumidity">—</div><div class="weather-stat-lbl">humidity</div></div>
+            <div class="weather-stat"><div class="weather-stat-val" id="statWind">—</div><div class="weather-stat-lbl">wind mph</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="report-card">
+        <div class="report-header"><div class="report-title">morning brief</div><div class="report-ai-badge">ai</div></div>
+        <div class="report-loading" id="reportLoading"><div class="pulse-ring"></div><div>preparing brief...</div></div>
+        <div id="reportContent" style="display:none;"></div>
+      </div>
+
+      <div class="evening-prep-card">
+        <div class="evening-prep-header"><div class="evening-prep-title">tonight's prep</div><div class="evening-prep-badge">tomorrow</div></div>
+        <div id="eveningPrepContent"><div class="evening-prep-empty">No workouts planned for tomorrow.</div></div>
+      </div>
+
+      <div class="page-bottom"></div>
+    </div>
+
+    <!-- PLAN -->
+    <div class="page" id="page-plan">
+      <div class="page-header">
+        <div><div class="page-title">Week Plan</div><div class="page-subtitle" id="weekRangeLabel">—</div></div>
+      </div>
+      <div id="weekSummaryBar" style="margin-bottom:20px;"></div>
+      <div class="section-label">this week</div>
+      <div class="week-plan-grid" id="weekPlanGrid"></div>
+      <div class="section-label">today's intention</div>
+      <div id="planIntentionBlock" style="margin-bottom:14px;"></div>
+      <div class="page-bottom"></div>
+    </div>
+
+    <!-- WORKOUTS -->
+    <div class="page" id="page-workouts">
+      <div class="page-header"><div><div class="page-title">Workouts</div><div class="page-subtitle">plan your week</div></div></div>
+      <div class="week-strip" id="weekStrip"></div>
+      <div class="workout-panel" id="workoutPanel">
+        <div class="workout-panel-title" id="workoutPanelTitle">Add workout</div>
+        <div class="workout-types-grid">
+          <button class="wtype-btn" data-type="Run" onclick="toggleWType(this)"><span class="wtype-btn-icon">🏃</span><span class="wtype-btn-label">run</span></button>
+          <button class="wtype-btn" data-type="Lift" onclick="toggleWType(this)"><span class="wtype-btn-icon">🏋️</span><span class="wtype-btn-label">lift</span></button>
+          <button class="wtype-btn" data-type="Bike" onclick="toggleWType(this)"><span class="wtype-btn-icon">🚴</span><span class="wtype-btn-label">bike</span></button>
+          <button class="wtype-btn" data-type="Swim" onclick="toggleWType(this)"><span class="wtype-btn-icon">🏊</span><span class="wtype-btn-label">swim</span></button>
+          <button class="wtype-btn" data-type="Yoga" onclick="toggleWType(this)"><span class="wtype-btn-icon">🧘</span><span class="wtype-btn-label">yoga</span></button>
+          <button class="wtype-btn" data-type="HIIT" onclick="toggleWType(this)"><span class="wtype-btn-icon">⚡</span><span class="wtype-btn-label">hiit</span></button>
+          <button class="wtype-btn" data-type="Walk" onclick="toggleWType(this)"><span class="wtype-btn-icon">🚶</span><span class="wtype-btn-label">walk</span></button>
+          <button class="wtype-btn" data-type="Sport" onclick="toggleWType(this)"><span class="wtype-btn-icon">🎾</span><span class="wtype-btn-label">sport</span></button>
+        </div>
+        <textarea class="workout-note" id="workoutNote" placeholder="Notes (optional)"></textarea>
+        <div class="btn-row">
+          <button class="btn btn-save" onclick="saveWorkout()">save</button>
+          <button class="btn btn-cancel" onclick="closePanel()">cancel</button>
+        </div>
+      </div>
+      <div class="workout-week-list" id="workoutList"></div>
+      <div class="page-bottom"></div>
+    </div>
+
+    <!-- PACK -->
+    <div class="page" id="page-pack">
+      <div class="page-header"><div><div class="page-title">Pack List</div><div class="page-subtitle">what to bring each day</div></div></div>
+      <div id="packContent"></div>
+      <div class="page-bottom"></div>
+    </div>
+
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('morning',this)"><span class="tab-icon">☀️</span>morning</button>
+    <button class="tab" onclick="switchTab('plan',this);buildPlanPage();"><span class="tab-icon">📅</span>plan</button>
+    <button class="tab" onclick="switchTab('workouts',this)"><span class="tab-icon">🏃</span>train</button>
+    <button class="tab" onclick="switchTab('pack',this)"><span class="tab-icon">🎒</span>pack</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════ STATE ═══════
+let workouts   = JSON.parse(localStorage.getItem('dr_workouts')   || '{}');
+let intentions = JSON.parse(localStorage.getItem('dr_intentions') || '{}');
+let weatherData = null;
+let selectedDayKey = null, selectedTypes = [];
+
+// ═══════ NAV ═══════
+function switchTab(name, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const page = document.getElementById('page-'+name);
+  page.classList.add('active'); void page.offsetWidth; btn.classList.add('active');
+}
+
+// ═══════ CLOCK ═══════
+const DAYS_LONG=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAYS_ABB=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_ABB=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function updateClock() {
+  const now=new Date(), h=now.getHours(), m=now.getMinutes();
+  const ampm=h>=12?'pm':'am', hh=h%12||12;
+  document.getElementById('morningTime').textContent=`${hh}:${String(m).padStart(2,'0')} ${ampm}`;
+  document.getElementById('morningDate').textContent=`${DAYS_LONG[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}`;
+}
+setInterval(updateClock,15000); updateClock();
+
+// ═══════ INTENTION ═══════
+function todayIntentionKey() { const d=new Date(); return `intent-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
+
+function loadTodayIntention() {
+  const val=intentions[todayIntentionKey()], disp=document.getElementById('intentionDisplay');
+  if (val) { disp.textContent=val; disp.classList.remove('empty'); }
+  else { disp.textContent='Tap to set your intention for today...'; disp.classList.add('empty'); }
+}
+
+function startEditIntention() {
+  document.getElementById('intentionInput').value=intentions[todayIntentionKey()]||'';
+  document.getElementById('intentionDisplay').classList.add('editing-mode');
+  document.getElementById('intentionInputWrap').classList.add('editing');
+  document.getElementById('intentionInput').focus();
+}
+
+function saveIntention() {
+  const val=document.getElementById('intentionInput').value.trim();
+  if (val) { intentions[todayIntentionKey()]=val; localStorage.setItem('dr_intentions',JSON.stringify(intentions)); }
+  cancelIntention(); loadTodayIntention(); showToast('intention set');
+}
+
+function cancelIntention() {
+  document.getElementById('intentionDisplay').classList.remove('editing-mode');
+  document.getElementById('intentionInputWrap').classList.remove('editing');
+}
+
+// ═══════ WEATHER ═══════
+const WMO_CODES={0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Foggy',48:'Icy fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',75:'Heavy snow',77:'Snow grains',80:'Light showers',81:'Showers',82:'Violent showers',85:'Snow showers',86:'Heavy snow showers',95:'Thunderstorm',96:'Thunderstorm',99:'Severe thunderstorm'};
+const WMO_ICONS={0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',48:'🌫',51:'🌦',53:'🌧',55:'🌧',61:'🌦',63:'🌧',65:'🌧',71:'🌨',73:'❄️',75:'❄️',77:'❄️',80:'🌦',81:'🌧',82:'⛈',85:'🌨',86:'❄️',95:'⛈',96:'⛈',99:'⛈'};
+
+async function loadWeather() {
+  const hero=document.getElementById('weatherHero');
+  hero.classList.remove('loaded');
+  hero.querySelector('.weather-loading').innerHTML='<div class="dots-loader"><span></span><span></span><span></span></div><span>Fetching weather...</span>';
+  try {
+    const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:12000}));
+    const {latitude:lat,longitude:lon}=pos.coords;
+    let city='Your Location';
+    try { const geo=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`); const gd=await geo.json(); city=gd.address?.city||gd.address?.town||gd.address?.village||gd.address?.county||'Your Location'; } catch(_){}
+    const wx=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`);
+    const wd=await wx.json(); const cur=wd.current;
+    weatherData={temp:Math.round(cur.temperature_2m),feels:Math.round(cur.apparent_temperature),humidity:Math.round(cur.relative_humidity_2m),wind:Math.round(cur.wind_speed_10m),code:cur.weather_code,city};
+    document.getElementById('weatherLocation').textContent=city.toLowerCase();
+    document.getElementById('weatherTemp').innerHTML=`${weatherData.temp}<sup>°F</sup>`;
+    document.getElementById('weatherDesc').textContent=WMO_CODES[cur.weather_code]||'Unknown';
+    document.getElementById('weatherIcon').textContent=WMO_ICONS[cur.weather_code]||'🌤';
+    document.getElementById('statFeels').textContent=`${weatherData.feels}°`;
+    document.getElementById('statHumidity').textContent=`${weatherData.humidity}%`;
+    document.getElementById('statWind').textContent=weatherData.wind;
+    hero.classList.add('loaded');
+    generateMorningReport();
+  } catch(err) {
+    hero.querySelector('.weather-loading').innerHTML=`<span style="color:var(--red);font-size:0.8rem;">⚠️ ${err.code===1?'Location denied — enable in Settings.':'Could not fetch weather.'}</span>`;
+  }
+}
+
+// ═══════ MORNING REPORT ═══════
+async function generateMorningReport() {
+  if (!weatherData) return;
+  const rl=document.getElementById('reportLoading'), rc=document.getElementById('reportContent');
+  rl.style.display='flex'; rc.style.display='none';
+  const today=new Date(), tKey=dayKey(today), tmKey=dayKey(new Date(today.getTime()+86400000));
+  const todayW=workouts[tKey], tomorrowW=workouts[tmKey];
+  const intention=intentions[todayIntentionKey()];
+  const prompt=`You are a concise morning assistant. Respond ONLY with valid JSON, no markdown.
+
+Weather: ${weatherData.temp}°F, ${WMO_CODES[weatherData.code]}, feels ${weatherData.feels}°F, wind ${weatherData.wind}mph, humidity ${weatherData.humidity}%
+Today: ${todayW?todayW.types.join(' + ')+(todayW.note?` (${todayW.note})`:''):'Rest day'}
+Tomorrow: ${tomorrowW?tomorrowW.types.join(' + '):'Rest day'}
+Day: ${DAYS_LONG[today.getDay()]}, ${MONTHS[today.getMonth()]} ${today.getDate()}
+${intention?`Intention: "${intention}"`:''}
+
+{
+  "greeting": "Warm 1-sentence greeting mentioning the day",
+  "outfitSummary": "1-sentence outfit advice",
+  "outfitItems": ["item1","item2","item3","item4"],
+  "todayWorkoutNote": "1 sentence about today workout or rest encouragement",
+  "packReminder": "1 sentence about packing, or null if rest day",
+  "tomorrowNote": "1 sentence heads-up about tomorrow, or null",
+  "intentionNote": "1 short encouraging sentence referencing the intention if given, else null",
+  "tip": "Practical morning tip, max 12 words"
+}`;
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    let report; try{report=JSON.parse((data.content?.[0]?.text||'{}').replace(/```json|```/g,'').trim());}catch{report=buildFallbackReport();}
+    renderReport(report);
+  } catch(_) { renderReport(buildFallbackReport()); }
+}
+
+function buildFallbackReport() {
+  const today=new Date(), w=workouts[dayKey(today)], t=weatherData?.temp||70;
+  let outfit,items;
+  if(t<=32){outfit="It's freezing — bundle up with heavy layers.";items=['Heavy coat','Thermal layers','Gloves','Warm hat','Boots'];}
+  else if(t<=50){outfit="Cold — a jacket and layers are essential.";items=['Winter jacket','Sweater','Jeans','Boots'];}
+  else if(t<=65){outfit="Cool and crisp — a light jacket is perfect.";items=['Light jacket','Long sleeve','Chinos','Sneakers'];}
+  else if(t<=78){outfit="Mild day — casual layers work great.";items=['T-shirt','Light cardigan','Jeans','Sneakers'];}
+  else{outfit="Warm out — keep it light and breathable.";items=['T-shirt','Shorts','Sneakers','Sunglasses'];}
+  return {greeting:`Good morning! Happy ${DAYS_LONG[today.getDay()]}.`,outfitSummary:outfit,outfitItems:items,todayWorkoutNote:w?`${w.types.join(' + ')} is on the schedule — let's go.`:'Rest day — recovery is part of the work.',packReminder:w?`Pack your ${w.types.map(t=>t.toLowerCase()).join(' and ')} gear.`:null,tomorrowNote:null,intentionNote:null,tip:'Drink a full glass of water before anything else.'};
+}
+
+function renderReport(r) {
+  const rl=document.getElementById('reportLoading'), rc=document.getElementById('reportContent');
+  let html='<div class="report-body">';
+  html+=`<div class="report-section"><p>${r.greeting}</p></div>`;
+  if(r.intentionNote) html+=`<div class="report-section" style="padding:10px 12px;border-left:1px solid var(--accent);margin-left:2px;"><p style="font-style:italic;color:var(--text2);font-weight:300;">${r.intentionNote}</p></div>`;
+  html+=`<div class="report-section"><div class="report-section-title">what to wear</div><p>${r.outfitSummary}</p><div class="report-chips">`;
+  (r.outfitItems||[]).forEach(i=>html+=`<span class="chip">${i}</span>`);
+  html+=`</div></div>`;
+  if(r.todayWorkoutNote){html+=`<div class="report-section"><div class="report-section-title">workout</div><p>${r.todayWorkoutNote}</p>`;if(r.packReminder)html+=`<div class="report-chips"><span class="chip green">🎒 ${r.packReminder}</span></div>`;html+=`</div>`;}
+  if(r.tomorrowNote) html+=`<div class="report-section"><div class="report-section-title">tomorrow</div><p>${r.tomorrowNote}</p></div>`;
+  if(r.tip) html+=`<div style="padding:10px 12px;border-left:1px solid var(--text3);margin-left:2px;"><span style="font-family:'DM Mono',monospace;font-size:0.55rem;font-weight:400;letter-spacing:0.08em;text-transform:lowercase;color:var(--text3);">tip  </span><span style="font-size:0.82rem;color:var(--text2);font-weight:300;">${r.tip}</span></div>`;
+  html+='</div>';
+  rc.innerHTML=html; rl.style.display='none'; rc.style.display='block';
+  renderEveningPrep();
+}
+
+// ═══════ EVENING PREP ═══════
+const EVENING_MAP={
+  Run:[{e:'👟',t:'Set out running shoes'},{e:'🩳',t:'Lay out athletic clothes'},{e:'💧',t:'Fill water bottle'},{e:'🧢',t:'Find your cap or headband'}],
+  Lift:[{e:'🏋️',t:'Pack gym bag'},{e:'👟',t:'Set out gym shoes'},{e:'💧',t:'Fill water bottle'},{e:'🎧',t:'Charge headphones'}],
+  Bike:[{e:'🚴',t:'Check tire pressure'},{e:'🪖',t:'Find your helmet'},{e:'💧',t:'Fill water bottle'},{e:'🔧',t:'Pack repair kit'}],
+  Swim:[{e:'🩱',t:'Pack swimwear'},{e:'🥽',t:'Find your goggles'},{e:'🛁',t:'Pack a towel'},{e:'🏊',t:'Find swim cap'}],
+  Yoga:[{e:'🧘',t:'Set out yoga mat'},{e:'👗',t:'Lay out comfortable clothes'},{e:'💧',t:'Fill water bottle'}],
+  HIIT:[{e:'👟',t:'Set out cross-trainers'},{e:'🩳',t:'Lay out workout clothes'},{e:'💧',t:'Fill water bottle'}],
+  Walk:[{e:'👟',t:'Set out walking shoes'},{e:'🧢',t:'Find hat or visor'},{e:'💧',t:'Fill water bottle'}],
+  Sport:[{e:'👟',t:'Pack sport shoes'},{e:'🎽',t:'Pack sport kit'},{e:'💧',t:'Fill water bottle'}],
+};
+
+function renderEveningPrep() {
+  const tomorrow=new Date(new Date().getTime()+86400000), tKey=dayKey(tomorrow), w=workouts[tKey];
+  const content=document.getElementById('eveningPrepContent');
+  if(!w||!w.types.length){content.innerHTML='<div class="evening-prep-empty">No workouts planned for tomorrow — enjoy the rest!</div>';return;}
+  const allItems=[]; w.types.forEach(type=>{(EVENING_MAP[type]||[]).forEach(item=>{if(!allItems.find(i=>i.t===item.t))allItems.push(item);});});
+  content.innerHTML=`<p style="font-size:0.78rem;color:var(--text3);margin-bottom:12px;font-family:'DM Mono',monospace;font-weight:300;">tomorrow: <span style="color:var(--amber);">${w.types.join(' + ').toLowerCase()}</span></p><div class="evening-checklist">${allItems.map(item=>`<div class="evening-item" onclick="this.classList.toggle('checked')"><div class="evening-check">✓</div><span class="evening-item-emoji">${item.e}</span><span class="evening-item-text">${item.t}</span></div>`).join('')}</div>`;
+}
+
+// ═══════ PLAN PAGE ═══════
+function buildPlanPage() {
+  const today=new Date(), start=new Date(today); start.setDate(today.getDate()-today.getDay());
+  const end=new Date(start); end.setDate(start.getDate()+6);
+  document.getElementById('weekRangeLabel').textContent=`${MONTHS_ABB[start.getMonth()]} ${start.getDate()} – ${MONTHS_ABB[end.getMonth()]} ${end.getDate()}`;
+
+  const trainDays=Object.keys(workouts).filter(k=>{const [yr,mo,dt]=k.split('-').map(Number);const d=new Date(yr,mo,dt);return d>=start&&d<=end;}).length;
+  const pct=Math.round((trainDays/7)*100);
+  const msg=trainDays===0?'No workouts planned yet — tap a day to add one.':trainDays<=2?`${trainDays} workout${trainDays>1?'s':''} planned — keep building!`:trainDays<=4?`${trainDays} workouts — solid week!`:trainDays<=6?`${trainDays} workouts — great commitment!`:`${trainDays} workouts — full week, incredible!`;
+  document.getElementById('weekSummaryBar').innerHTML=`<div style="border-bottom:1px solid var(--border);padding-bottom:16px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><span style="font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:400;color:var(--text2);">weekly activity</span><span style="font-family:'DM Mono',monospace;font-size:0.78rem;font-weight:400;color:var(--green);">${trainDays}/7</span></div><div style="height:2px;background:var(--surface2);border-radius:1px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--accent);border-radius:1px;transition:width 0.5s ease;"></div></div><div style="margin-top:8px;font-family:'DM Sans',sans-serif;font-size:0.72rem;font-weight:300;color:var(--text3);">${msg}</div></div>`;
+
+  const grid=document.getElementById('weekPlanGrid'); grid.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i); const key=dayKey(d); const w=workouts[key]; const isToday=key===dayKey(today);
+    const row=document.createElement('div');
+    row.className='week-plan-row'+(isToday?' today':'')+(w?' has-workout':'');
+    row.onclick=()=>{
+      switchTab('workouts',document.querySelectorAll('.tab')[2]);
+      setTimeout(()=>{buildWeekStrip();const pill=document.querySelector(`[data-key="${key}"]`);if(pill)openPanel(pill,key,`${DAYS_LONG[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`);},120);
+    };
+    let contentHtml=w&&w.types.length?`<div class="week-plan-workout-chips">${w.types.map(t=>`<span class="chip green" style="font-size:0.7rem;padding:4px 10px;">${t}</span>`).join('')}</div>${w.note?`<div class="week-plan-note">${w.note}</div>`:''}`:(isToday?`<div class="week-plan-add-hint">+ Add today's workout</div>`:`<div class="week-plan-rest">Rest day</div>`);
+    row.innerHTML=`<div class="week-plan-day-col"><span class="week-plan-day-abbr">${DAYS_ABB[d.getDay()]}</span><span class="week-plan-day-num">${d.getDate()}</span></div><div class="week-plan-content">${contentHtml}</div><div class="week-plan-edit-col">›</div>`;
+    grid.appendChild(row);
+  }
+
+  const iVal=intentions[todayIntentionKey()];
+  document.getElementById('planIntentionBlock').innerHTML=iVal
+    ?`<div style="border-left:1px solid var(--accent);padding:12px 16px;"><div style="font-family:'DM Mono',monospace;font-size:0.55rem;font-weight:400;letter-spacing:0.08em;text-transform:lowercase;color:var(--text3);margin-bottom:6px;">${DAYS_LONG[today.getDay()].toLowerCase()}'s intention</div><p style="font-family:'DM Sans',sans-serif;font-size:0.88rem;font-style:italic;font-weight:300;color:var(--text);line-height:1.6;">${iVal}</p></div>`
+    :`<div style="color:var(--text3);font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:300;">No intention set. <span onclick="switchTab('morning',document.querySelectorAll('.tab')[0]);setTimeout(startEditIntention,200);" style="color:var(--accent);cursor:pointer;">Set one →</span></div>`;
+}
+
+// ═══════ WORKOUTS ═══════
+function dayKey(d){return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;}
+
+function buildWeekStrip(){
+  const strip=document.getElementById('weekStrip'); strip.innerHTML='';
+  const today=new Date(), start=new Date(today); start.setDate(today.getDate()-today.getDay());
+  for(let i=0;i<7;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i); const key=dayKey(d);
+    const btn=document.createElement('button');
+    btn.className='day-pill'+(key===dayKey(today)?' today':'')+(workouts[key]?' has-workout':'');
+    btn.dataset.key=key;
+    btn.innerHTML=`<span class="day-pill-abbr">${DAYS_ABB[d.getDay()]}</span><span class="day-pill-num">${d.getDate()}</span>`;
+    btn.onclick=()=>openPanel(btn,key,`${DAYS_LONG[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`);
+    strip.appendChild(btn);
+  }
+}
+
+function openPanel(btn,key,label){
+  document.querySelectorAll('.day-pill').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected'); selectedDayKey=key; selectedTypes=workouts[key]?.types?[...workouts[key].types]:[];
+  document.getElementById('workoutPanelTitle').textContent=label;
+  document.getElementById('workoutNote').value=workouts[key]?.note||'';
+  document.querySelectorAll('.wtype-btn').forEach(b=>b.classList.toggle('selected',selectedTypes.includes(b.dataset.type)));
+  const panel=document.getElementById('workoutPanel'); panel.classList.add('visible'); panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function closePanel(){document.getElementById('workoutPanel').classList.remove('visible');document.querySelectorAll('.day-pill').forEach(b=>b.classList.remove('selected'));selectedDayKey=null;}
+
+function toggleWType(btn){const type=btn.dataset.type;btn.classList.toggle('selected');selectedTypes.includes(type)?(selectedTypes=selectedTypes.filter(t=>t!==type)):selectedTypes.push(type);}
+
+function saveWorkout(){
+  if(!selectedDayKey)return;
+  const note=document.getElementById('workoutNote').value.trim();
+  if(selectedTypes.length===0)delete workouts[selectedDayKey]; else workouts[selectedDayKey]={types:[...selectedTypes],note};
+  localStorage.setItem('dr_workouts',JSON.stringify(workouts));
+  closePanel(); buildWeekStrip(); renderWorkoutList(); renderPackList(); renderEveningPrep();
+  showToast('workout saved');
+}
+
+function renderWorkoutList(){
+  const list=document.getElementById('workoutList'), keys=Object.keys(workouts);
+  if(!keys.length){list.innerHTML='<div class="empty"><div class="empty-icon">💪</div><div class="empty-text">Tap a day above to add a workout.</div></div>';return;}
+  list.innerHTML=keys.map(key=>{const w=workouts[key];const [yr,mo,dt]=key.split('-').map(Number);const d=new Date(yr,mo,dt);return `<div class="workout-day-row"><div class="workout-day-label">${DAYS_ABB[d.getDay()]} ${d.getDate()}</div><div class="workout-day-types">${w.types.map(t=>`<span class="chip green" style="font-size:0.72rem;">${t}</span>`).join('')}${w.note?`<span class="chip" style="font-size:0.72rem;font-style:italic;">${w.note}</span>`:''}</div><button class="workout-day-del" onclick="deleteWorkout('${key}')">✕</button></div>`;}).join('');
+}
+
+function deleteWorkout(key){delete workouts[key];localStorage.setItem('dr_workouts',JSON.stringify(workouts));buildWeekStrip();renderWorkoutList();renderPackList();renderEveningPrep();}
+
+// ═══════ PACK ═══════
+const PACK_MAP={Run:[{e:'👟',t:'Running shoes'},{e:'🩳',t:'Athletic shorts / tights'},{e:'🧢',t:'Cap or headband'},{e:'💧',t:'Water bottle'}],Lift:[{e:'🏋️',t:'Gym shoes'},{e:'👕',t:'Workout shirt'},{e:'🩳',t:'Athletic shorts'},{e:'💧',t:'Water bottle'}],Bike:[{e:'🚴',t:'Helmet'},{e:'🚲',t:'Cycling shorts'},{e:'💧',t:'Water bottle'},{e:'🔧',t:'Repair kit'}],Swim:[{e:'🩱',t:'Swimwear'},{e:'🥽',t:'Goggles'},{e:'🏊',t:'Swim cap'},{e:'🛁',t:'Towel'}],Yoga:[{e:'🧘',t:'Yoga mat'},{e:'👗',t:'Comfortable leggings'},{e:'🧦',t:'Grip socks'}],HIIT:[{e:'👟',t:'Cross-trainers'},{e:'🩳',t:'Athletic clothes'},{e:'💧',t:'Water bottle'}],Walk:[{e:'👟',t:'Comfortable shoes'},{e:'🧢',t:'Hat or visor'},{e:'💧',t:'Water bottle'}],Sport:[{e:'👟',t:'Sport shoes'},{e:'🎽',t:'Sport kit'},{e:'💧',t:'Water bottle'}]};
+const BASE_PACK=[{e:'👕',t:'Change of clothes'},{e:'🧴',t:'Deodorant / toiletries'}];
+
+function renderPackList(){
+  const content=document.getElementById('packContent'), keys=Object.keys(workouts);
+  if(!keys.length){content.innerHTML='<div class="empty"><div class="empty-icon">🎒</div><div class="empty-text">Add workouts to see your pack list here.</div></div>';return;}
+  content.innerHTML=keys.map(key=>{const w=workouts[key];const [yr,mo,dt]=key.split('-').map(Number);const d=new Date(yr,mo,dt);const allItems=[...BASE_PACK];w.types.forEach(type=>{(PACK_MAP[type]||[]).forEach(item=>{if(!allItems.find(i=>i.t===item.t))allItems.push(item);});});return `<div class="pack-section"><div class="pack-section-header"><div class="pack-section-day">${DAYS_LONG[d.getDay()]}, ${d.getDate()}</div><div class="pack-section-types">${w.types.map(t=>`<span class="chip green" style="font-size:0.65rem;">${t}</span>`).join('')}</div></div>${allItems.map(item=>`<div class="pack-item" onclick="this.classList.toggle('checked')"><div class="pack-check">✓</div><span class="pack-item-emoji">${item.e}</span><span class="pack-item-text">${item.t}</span></div>`).join('')}</div>`;}).join('');
+}
+
+// ═══════ UTILS ═══════
+function showToast(msg,dur=2600){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+
+// ═══════ INIT ═══════
+loadTodayIntention();
+buildWeekStrip();
+renderWorkoutList();
+renderPackList();
+renderEveningPrep();
+if('geolocation' in navigator) loadWeather();
+else document.querySelector('.weather-loading').innerHTML='<span style="color:var(--red);font-size:0.8rem;">⚠️ Location not available.</span>';
+</script>
+
+</body>
+</html>
