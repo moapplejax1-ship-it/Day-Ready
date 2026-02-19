@@ -208,6 +208,25 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .calc-result-val { font-family: 'DM Mono', monospace; font-size: 0.9rem; font-weight: 400; color: var(--accent); }
 .calc-result-val.green { color: var(--green); }
 .calc-activity-note { margin-top: 10px; font-family: 'DM Mono', monospace; font-size: 0.68rem; font-weight: 300; color: var(--text3); line-height: 1.5; }
+.todo-item { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid rgba(42,42,42,0.5); cursor: pointer; }
+.todo-item:last-child { border-bottom: none; }
+.todo-check { width: 16px; height: 16px; border-radius: 2px; border: 1px solid var(--border2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 0.6rem; color: transparent; }
+.todo-item.checked .todo-check { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.todo-item.checked .todo-text { text-decoration: line-through; color: var(--text3); }
+.todo-text { font-size: 0.82rem; color: var(--text2); flex: 1; font-weight: 300; }
+.todo-del { background: none; border: none; color: var(--text3); font-size: 0.8rem; cursor: pointer; padding: 4px; opacity: 0.5; flex-shrink: 0; }
+.todo-input-row { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
+.todo-input { flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--border2); outline: none; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 300; color: var(--text); padding: 8px 0; }
+.todo-input::placeholder { color: var(--text3); }
+.todo-add-btn { background: var(--accent); border: none; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: var(--bg); cursor: pointer; flex-shrink: 0; }
+.schedule-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 18px; margin-top: 20px; }
+.schedule-card-title { font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 400; margin-bottom: 14px; color: var(--text2); }
+.schedule-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+.schedule-label { font-family: 'DM Mono', monospace; font-size: 0.68rem; font-weight: 300; color: var(--text3); min-width: 50px; }
+.custom-stretch-row { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
+.custom-stretch-input { flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--border2); outline: none; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 300; color: var(--text); padding: 8px 0; }
+.custom-stretch-input::placeholder { color: var(--text3); }
+.stretch-del { background: none; border: none; color: var(--text3); font-size: 0.8rem; cursor: pointer; padding: 4px; opacity: 0.5; flex-shrink: 0; }
 
 </style>
 </head>
@@ -223,21 +242,18 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
         <div class="time-badge" id="morningTime">—</div>
       </div>
 
-      <div class="report-card" id="todayIntentionCard" style="display:none;">
-        <div class="report-header"><div class="report-title">Today's Intention</div></div>
-        <div id="todayIntentionDisplay" style="font-family:'DM Sans',sans-serif;font-size:0.9rem;font-style:italic;font-weight:300;color:var(--text);line-height:1.6;"></div>
+      <div class="report-card" id="todayTodoCard" style="display:none;">
+        <div class="report-header"><div class="report-title">Today's To-Do</div></div>
+        <div id="todayTodoList"></div>
       </div>
 
       <div class="report-card">
-        <div class="report-header"><div class="report-title">Tomorrow's Intention</div></div>
-        <div class="intention-display empty" id="intentionDisplay" onclick="startEditIntention()">Tap to set your intention for tomorrow...</div>
-        <div class="intention-input-wrap" id="intentionInputWrap">
-          <textarea class="intention-input" id="intentionInput" placeholder="What do you want to focus on tomorrow?" maxlength="140"></textarea>
-          <div class="intention-btn-row">
-            <button class="intention-save" onclick="saveIntention()">Set</button>
-            <button class="intention-cancel" onclick="cancelIntention()">Cancel</button>
-          </div>
+        <div class="report-header"><div class="report-title">Tomorrow's To-Do</div></div>
+        <div class="todo-input-row">
+          <input class="todo-input" id="todoInput" placeholder="Add a to-do for tomorrow..." maxlength="100" onkeydown="if(event.key==='Enter')addTomorrowTodo()">
+          <button class="todo-add-btn" onclick="addTomorrowTodo()">+</button>
         </div>
+        <div id="tomorrowTodoList"></div>
       </div>
 
       <div class="weather-hero" id="weatherHero">
@@ -293,8 +309,8 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
       <div id="weekSummaryBar" style="margin-bottom:20px;"></div>
       <div class="section-label">This Week</div>
       <div class="week-plan-grid" id="weekPlanGrid"></div>
-      <div class="section-label">Intentions</div>
-      <div id="planIntentionBlock" style="margin-bottom:14px;"></div>
+      <div class="section-label">To-Do</div>
+      <div id="planTodoBlock" style="margin-bottom:14px;"></div>
       <div class="page-bottom"></div>
     </div>
 
@@ -322,6 +338,35 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
         </div>
       </div>
       <div class="workout-week-list" id="workoutList"></div>
+
+      <div class="schedule-card">
+        <div class="schedule-card-title">Quick Schedule</div>
+        <div class="workout-types-grid" id="scheduleTypesGrid">
+          <button class="wtype-btn" data-type="Run" onclick="toggleSchedType(this)"><span class="wtype-btn-icon">🏃</span><span class="wtype-btn-label">run</span></button>
+          <button class="wtype-btn" data-type="Lift" onclick="toggleSchedType(this)"><span class="wtype-btn-icon">🏋️</span><span class="wtype-btn-label">lift</span></button>
+          <button class="wtype-btn" data-type="Bike" onclick="toggleSchedType(this)"><span class="wtype-btn-icon">🚴</span><span class="wtype-btn-label">bike</span></button>
+          <button class="wtype-btn" data-type="Swim" onclick="toggleSchedType(this)"><span class="wtype-btn-icon">🏊</span><span class="wtype-btn-label">swim</span></button>
+          <button class="wtype-btn" data-type="Yoga" onclick="toggleSchedType(this)"><span class="wtype-btn-icon">🧘</span><span class="wtype-btn-label">yoga</span></button>
+          <button class="wtype-btn" data-type="HIIT" onclick="toggleSchedType(this)"><span class="wtype-btn-icon">⚡</span><span class="wtype-btn-label">hiit</span></button>
+          <button class="wtype-btn" data-type="Walk" onclick="toggleSchedType(this)"><span class="wtype-btn-icon">🚶</span><span class="wtype-btn-label">walk</span></button>
+          <button class="wtype-btn" data-type="Sport" onclick="toggleSchedType(this)"><span class="wtype-btn-icon">🎾</span><span class="wtype-btn-label">sport</span></button>
+          <button class="wtype-btn" data-type="Ruck" onclick="toggleSchedType(this)"><span class="wtype-btn-icon">🎒</span><span class="wtype-btn-label">ruck</span></button>
+        </div>
+        <div class="schedule-row">
+          <span class="schedule-label">repeat</span>
+          <select class="calc-select" id="scheduleFreq" style="flex:1;">
+            <option value="1">Every day</option>
+            <option value="2" selected>Every 2 days</option>
+            <option value="3">Every 3 days</option>
+            <option value="4">Every 4 days</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-save" onclick="applySchedule()">apply to week</button>
+          <button class="btn btn-cancel" onclick="clearSchedule()">clear week</button>
+        </div>
+      </div>
+
       <div class="page-bottom"></div>
     </div>
 
@@ -339,19 +384,28 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
       <div class="section-label" style="margin-top:0;">Daily Stretches</div>
       <div id="stretchContent"></div>
 
+      <div class="stretch-section" style="margin-top:20px;">
+        <div class="stretch-section-title">Add Your Own</div>
+        <div class="custom-stretch-row">
+          <input class="custom-stretch-input" id="customStretchName" placeholder="Stretch name..." maxlength="60" onkeydown="if(event.key==='Enter')addCustomStretch()">
+          <input class="custom-stretch-input" id="customStretchHold" placeholder="Hold" maxlength="10" style="max-width:70px;" onkeydown="if(event.key==='Enter')addCustomStretch()">
+          <button class="todo-add-btn" onclick="addCustomStretch()">+</button>
+        </div>
+      </div>
+
       <div class="section-label">Calorie Calculator</div>
       <div class="calc-card">
         <div class="calc-header"><div class="calc-title">Your Profile</div></div>
         <div class="calc-form-row">
           <div class="calc-field"><label class="calc-label">sex</label><select class="calc-select" id="calcSex"><option value="male">Male</option><option value="female">Female</option></select></div>
-          <div class="calc-field"><label class="calc-label">age</label><input class="calc-input" id="calcAge" type="number" min="1" max="120" placeholder="25"></div>
+          <div class="calc-field"><label class="calc-label">age</label><input class="calc-input" id="calcAge" type="number" min="1" max="120"></div>
         </div>
         <div class="calc-form-row">
-          <div class="calc-field"><label class="calc-label">weight (lbs)</label><input class="calc-input" id="calcWeight" type="number" min="1" max="999" placeholder="160"></div>
+          <div class="calc-field"><label class="calc-label">weight (lbs)</label><input class="calc-input" id="calcWeight" type="number" min="1" max="999"></div>
         </div>
         <div class="calc-form-row">
-          <div class="calc-field"><label class="calc-label">height (ft)</label><input class="calc-input" id="calcHeightFt" type="number" min="1" max="8" placeholder="5"></div>
-          <div class="calc-field"><label class="calc-label">height (in)</label><input class="calc-input" id="calcHeightIn" type="number" min="0" max="11" placeholder="10"></div>
+          <div class="calc-field"><label class="calc-label">height (ft)</label><input class="calc-input" id="calcHeightFt" type="number" min="1" max="8"></div>
+          <div class="calc-field"><label class="calc-label">height (in)</label><input class="calc-input" id="calcHeightIn" type="number" min="0" max="11"></div>
         </div>
         <div class="calc-form-row">
           <div class="calc-field"><label class="calc-label">activity level</label><select class="calc-select" id="calcActivity"><option value="1.2">Sedentary (little / no exercise)</option><option value="1.375">Lightly active (1–3 days / week)</option><option value="1.55">Moderately active (3–5 days / week)</option><option value="1.725">Very active (6–7 days / week)</option><option value="1.9">Extra active (intense / physical job)</option></select></div>
@@ -382,9 +436,11 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 <script>
 // ═══════ STATE ═══════
 let workouts   = JSON.parse(localStorage.getItem('dr_workouts')   || '{}');
-let intentions = JSON.parse(localStorage.getItem('dr_intentions') || '{}');
+let todos      = JSON.parse(localStorage.getItem('dr_todos')      || '{}');
 let weatherData = null;
 let selectedDayKey = null, selectedTypes = [];
+let scheduleTypes = [];
+let customStretches = JSON.parse(localStorage.getItem('dr_custom_stretches') || '[]');
 
 // ═══════ NAV ═══════
 function switchTab(name, btn) {
@@ -408,40 +464,53 @@ function updateClock() {
 }
 setInterval(updateClock,15000); updateClock();
 
-// ═══════ INTENTION ═══════
-function todayIntentionKey() { const d=new Date(); return `intent-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
-function tomorrowIntentionKey() { const d=new Date(Date.now()+86400000); return `intent-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
+// ═══════ TODOS ═══════
+function todayTodoKey() { const d=new Date(); return `todo-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
+function tomorrowTodoKey() { const d=new Date(Date.now()+86400000); return `todo-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
 
-function loadTodayIntention() {
-  // Show today's intention (was set last night)
-  const todayVal=intentions[todayIntentionKey()];
-  const todayCard=document.getElementById('todayIntentionCard');
-  const todayDisp=document.getElementById('todayIntentionDisplay');
-  if (todayVal) { todayDisp.textContent=todayVal; todayCard.style.display='block'; }
-  else { todayCard.style.display='none'; }
-
-  // Show tomorrow's intention editor
-  const tmVal=intentions[tomorrowIntentionKey()], disp=document.getElementById('intentionDisplay');
-  if (tmVal) { disp.textContent=tmVal; disp.classList.remove('empty'); }
-  else { disp.textContent='Tap to set your intention for tomorrow...'; disp.classList.add('empty'); }
+function loadTodos() {
+  const todayItems=todos[todayTodoKey()]||[];
+  const todayCard=document.getElementById('todayTodoCard');
+  const todayList=document.getElementById('todayTodoList');
+  if(todayItems.length){
+    todayCard.style.display='block';
+    todayList.innerHTML=todayItems.map((item,i)=>`<div class="todo-item${item.done?' checked':''}" onclick="toggleTodayTodo(${i})"><div class="todo-check">✓</div><span class="todo-text">${item.text}</span></div>`).join('');
+  } else { todayCard.style.display='none'; }
+  renderTomorrowTodos();
 }
 
-function startEditIntention() {
-  document.getElementById('intentionInput').value=intentions[tomorrowIntentionKey()]||'';
-  document.getElementById('intentionDisplay').classList.add('editing-mode');
-  document.getElementById('intentionInputWrap').classList.add('editing');
-  document.getElementById('intentionInput').focus();
+function renderTomorrowTodos() {
+  const tmItems=todos[tomorrowTodoKey()]||[];
+  const list=document.getElementById('tomorrowTodoList');
+  if(!tmItems.length){ list.innerHTML='<div style="color:var(--text3);font-size:0.82rem;font-weight:300;">No items yet — add your first to-do above.</div>'; return; }
+  list.innerHTML=tmItems.map((item,i)=>`<div class="todo-item"><div class="todo-check" style="border-color:var(--border);color:transparent;">✓</div><span class="todo-text">${item.text}</span><button class="todo-del" onclick="deleteTomorrowTodo(${i})">✕</button></div>`).join('');
 }
 
-function saveIntention() {
-  const val=document.getElementById('intentionInput').value.trim();
-  if (val) { intentions[tomorrowIntentionKey()]=val; localStorage.setItem('dr_intentions',JSON.stringify(intentions)); }
-  cancelIntention(); loadTodayIntention(); showToast('intention set for tomorrow');
+function addTomorrowTodo() {
+  const input=document.getElementById('todoInput'), val=input.value.trim();
+  if(!val)return;
+  const key=tomorrowTodoKey();
+  if(!todos[key])todos[key]=[];
+  todos[key].push({text:val,done:false});
+  localStorage.setItem('dr_todos',JSON.stringify(todos));
+  input.value=''; renderTomorrowTodos(); showToast('to-do added');
 }
 
-function cancelIntention() {
-  document.getElementById('intentionDisplay').classList.remove('editing-mode');
-  document.getElementById('intentionInputWrap').classList.remove('editing');
+function deleteTomorrowTodo(i) {
+  const key=tomorrowTodoKey();
+  if(!todos[key])return;
+  todos[key].splice(i,1);
+  if(!todos[key].length)delete todos[key];
+  localStorage.setItem('dr_todos',JSON.stringify(todos));
+  renderTomorrowTodos();
+}
+
+function toggleTodayTodo(i) {
+  const key=todayTodoKey();
+  if(!todos[key]||!todos[key][i])return;
+  todos[key][i].done=!todos[key][i].done;
+  localStorage.setItem('dr_todos',JSON.stringify(todos));
+  loadTodos();
 }
 
 // ═══════ WEATHER ═══════
@@ -481,14 +550,15 @@ async function generateMorningReport() {
   rl.style.display='flex'; rc.style.display='none';
   const today=new Date(), tKey=dayKey(today), tmKey=dayKey(new Date(today.getTime()+86400000));
   const todayW=workouts[tKey], tomorrowW=workouts[tmKey];
-  const intention=intentions[todayIntentionKey()];
+  const todayTodos=(todos[todayTodoKey()]||[]).filter(t=>!t.done).map(t=>t.text);
+  const todoSummary=todayTodos.join(', ');
   const prompt=`You are a concise morning assistant. Respond ONLY with valid JSON, no markdown.
 
 Weather: ${weatherData.temp}°F, ${WMO_CODES[weatherData.code]}, feels ${weatherData.feels}°F, wind ${weatherData.wind}mph, humidity ${weatherData.humidity}%
 Today: ${todayW?todayW.types.join(' + ')+(todayW.note?` (${todayW.note})`:''):'Rest day'}
 Tomorrow: ${tomorrowW?tomorrowW.types.join(' + '):'Rest day'}
 Day: ${DAYS_LONG[today.getDay()]}, ${MONTHS[today.getMonth()]} ${today.getDate()}
-${intention?`Intention: "${intention}"`:''}
+${todoSummary?`Today's to-do: "${todoSummary}"`:''}
 
 {
   "greeting": "Warm 1-sentence greeting mentioning the day",
@@ -497,7 +567,7 @@ ${intention?`Intention: "${intention}"`:''}
   "todayWorkoutNote": "1 sentence about today workout or rest encouragement",
   "packReminder": "1 sentence about packing, or null if rest day",
   "tomorrowNote": "1 sentence heads-up about tomorrow, or null",
-  "intentionNote": "1 short encouraging sentence referencing the intention if given, else null",
+  "intentionNote": "1 short encouraging sentence referencing the to-do items if given, else null",
   "tip": "Practical morning tip, max 12 words"
 }`;
   try {
@@ -581,13 +651,12 @@ function buildPlanPage() {
     grid.appendChild(row);
   }
 
-  const iVal=intentions[todayIntentionKey()];
-  const iTmVal=intentions[tomorrowIntentionKey()];
-  let intentionHtml='';
-  if(iVal) intentionHtml+=`<div style="border-left:1px solid var(--accent);padding:12px 16px;margin-bottom:10px;"><div style="font-family:'DM Sans',sans-serif;font-size:0.6rem;font-weight:400;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Today's Intention</div><p style="font-family:'DM Sans',sans-serif;font-size:0.88rem;font-style:italic;font-weight:300;color:var(--text);line-height:1.6;">${iVal}</p></div>`;
-  if(iTmVal) intentionHtml+=`<div style="border-left:1px solid var(--border2);padding:12px 16px;"><div style="font-family:'DM Sans',sans-serif;font-size:0.6rem;font-weight:400;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Tomorrow's Intention</div><p style="font-family:'DM Sans',sans-serif;font-size:0.88rem;font-style:italic;font-weight:300;color:var(--text2);line-height:1.6;">${iTmVal}</p></div>`;
-  if(!iVal&&!iTmVal) intentionHtml=`<div style="color:var(--text3);font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:300;">No intention set. <span onclick="switchTab('morning',document.querySelectorAll('.tab')[0]);setTimeout(startEditIntention,200);" style="color:var(--accent);cursor:pointer;">Set one →</span></div>`;
-  document.getElementById('planIntentionBlock').innerHTML=intentionHtml;
+  const todayTodos=todos[todayTodoKey()]||[], tmTodos=todos[tomorrowTodoKey()]||[];
+  let todoHtml='';
+  if(todayTodos.length) todoHtml+=`<div style="border-left:1px solid var(--accent);padding:12px 16px;margin-bottom:10px;"><div style="font-family:'DM Sans',sans-serif;font-size:0.6rem;font-weight:400;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Today's To-Do</div>${todayTodos.map(t=>`<p style="font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:300;color:${t.done?'var(--text3)':'var(--text)'};line-height:1.6;${t.done?'text-decoration:line-through;':''}">${t.done?'✓ ':'○ '}${t.text}</p>`).join('')}</div>`;
+  if(tmTodos.length) todoHtml+=`<div style="border-left:1px solid var(--border2);padding:12px 16px;"><div style="font-family:'DM Sans',sans-serif;font-size:0.6rem;font-weight:400;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Tomorrow's To-Do</div>${tmTodos.map(t=>`<p style="font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:300;color:var(--text2);line-height:1.6;">○ ${t.text}</p>`).join('')}</div>`;
+  if(!todayTodos.length&&!tmTodos.length) todoHtml=`<div style="color:var(--text3);font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:300;">No to-dos set. <span onclick="switchTab('morning',document.querySelectorAll('.tab')[0]);setTimeout(()=>document.getElementById('todoInput').focus(),200);" style="color:var(--accent);cursor:pointer;">Add one →</span></div>`;
+  document.getElementById('planTodoBlock').innerHTML=todoHtml;
 }
 
 // ═══════ WORKOUTS ═══════
@@ -625,7 +694,7 @@ function saveWorkout(){
   const note=document.getElementById('workoutNote').value.trim();
   if(selectedTypes.length===0)delete workouts[selectedDayKey]; else workouts[selectedDayKey]={types:[...selectedTypes],note};
   localStorage.setItem('dr_workouts',JSON.stringify(workouts));
-  closePanel(); buildWeekStrip(); renderWorkoutList(); renderPackList(); renderEveningPrep();
+  closePanel(); buildWeekStrip(); renderWorkoutList(); renderPackList(); renderEveningPrep(); renderStretches();
   showToast('workout saved');
 }
 
@@ -635,7 +704,7 @@ function renderWorkoutList(){
   list.innerHTML=keys.map(key=>{const w=workouts[key];const [yr,mo,dt]=key.split('-').map(Number);const d=new Date(yr,mo,dt);return `<div class="workout-day-row"><div class="workout-day-label">${DAYS_ABB[d.getDay()]} ${d.getDate()}</div><div class="workout-day-types">${w.types.map(t=>`<span class="chip green" style="font-size:0.72rem;">${t}</span>`).join('')}${w.note?`<span class="chip" style="font-size:0.72rem;font-style:italic;">${w.note}</span>`:''}</div><button class="workout-day-del" onclick="deleteWorkout('${key}')">✕</button></div>`;}).join('');
 }
 
-function deleteWorkout(key){delete workouts[key];localStorage.setItem('dr_workouts',JSON.stringify(workouts));buildWeekStrip();renderWorkoutList();renderPackList();renderEveningPrep();}
+function deleteWorkout(key){delete workouts[key];localStorage.setItem('dr_workouts',JSON.stringify(workouts));buildWeekStrip();renderWorkoutList();renderPackList();renderEveningPrep();renderStretches();}
 
 // ═══════ PACK ═══════
 const PACK_MAP={Run:[{e:'👟',t:'Running shoes'},{e:'🩳',t:'Athletic shorts / tights'},{e:'🧢',t:'Cap or headband'},{e:'💧',t:'Water bottle'}],Lift:[{e:'🏋️',t:'Gym shoes'},{e:'👕',t:'Workout shirt'},{e:'🩳',t:'Athletic shorts'},{e:'💧',t:'Water bottle'}],Bike:[{e:'🚴',t:'Helmet'},{e:'🚲',t:'Cycling shorts'},{e:'💧',t:'Water bottle'},{e:'🔧',t:'Repair kit'}],Swim:[{e:'🩱',t:'Swimwear'},{e:'🥽',t:'Goggles'},{e:'🏊',t:'Swim cap'},{e:'🛁',t:'Towel'}],Yoga:[{e:'🧘',t:'Yoga mat'},{e:'👗',t:'Comfortable leggings'},{e:'🧦',t:'Grip socks'}],HIIT:[{e:'👟',t:'Cross-trainers'},{e:'🩳',t:'Athletic clothes'},{e:'💧',t:'Water bottle'}],Walk:[{e:'👟',t:'Comfortable shoes'},{e:'🧢',t:'Hat or visor'},{e:'💧',t:'Water bottle'}],Sport:[{e:'👟',t:'Sport shoes'},{e:'🎽',t:'Sport kit'},{e:'💧',t:'Water bottle'}],Ruck:[{e:'🎒',t:'Large rucking backpack'},{e:'🧱',t:'Ruck weight plates'},{e:'👟',t:'Sturdy boots or trail shoes'},{e:'🩳',t:'Athletic clothes'},{e:'💧',t:'Water bottle'},{e:'🧢',t:'Cap or headband'}]};
@@ -677,6 +746,11 @@ function renderStretches(){
   html+=`<div class="stretch-section"><div class="stretch-section-title">${w&&w.types.length?'General Recovery':'Daily Stretch Routine'}</div>`;
   html+=STRETCH_MAP.General.map(s=>`<div class="stretch-item" onclick="this.classList.toggle('checked')"><div class="stretch-check">✓</div><span class="stretch-emoji">${s.e}</span><span class="stretch-text">${s.t}</span><span class="stretch-hold">${s.h}</span></div>`).join('');
   html+=`</div>`;
+  if(customStretches.length){
+    html+=`<div class="stretch-section"><div class="stretch-section-title">Your Stretches</div>`;
+    html+=customStretches.map((s,i)=>`<div class="stretch-item" onclick="this.classList.toggle('checked')"><div class="stretch-check">✓</div><span class="stretch-emoji">⭐</span><span class="stretch-text">${s.t}</span><span class="stretch-hold">${s.h}</span><button class="stretch-del" onclick="event.stopPropagation();deleteCustomStretch(${i})">✕</button></div>`).join('');
+    html+=`</div>`;
+  }
   content.innerHTML=html;
 }
 
@@ -729,6 +803,49 @@ function calculateCalories(){
   document.getElementById('calcResult').classList.add('visible');
   localStorage.setItem('dr_calc_profile',JSON.stringify({sex,age,weight:weightLbs,heightFt:htFt,heightIn:htIn,activity:String(activity)}));
   showToast('calories calculated');
+}
+
+// ═══════ SCHEDULE ═══════
+function toggleSchedType(btn){const type=btn.dataset.type;btn.classList.toggle('selected');scheduleTypes.includes(type)?(scheduleTypes=scheduleTypes.filter(t=>t!==type)):scheduleTypes.push(type);}
+
+function applySchedule(){
+  if(!scheduleTypes.length){showToast('select workout types first');return;}
+  const freq=parseInt(document.getElementById('scheduleFreq').value);
+  const today=new Date(), start=new Date(today); start.setDate(today.getDate()-today.getDay());
+  for(let i=0;i<7;i++){
+    if(i%freq!==0)continue;
+    const d=new Date(start);d.setDate(start.getDate()+i);const key=dayKey(d);
+    const existing=workouts[key];
+    if(existing){const merged=[...new Set([...existing.types,...scheduleTypes])];workouts[key]={types:merged,note:existing.note};}
+    else{workouts[key]={types:[...scheduleTypes],note:''};}
+  }
+  localStorage.setItem('dr_workouts',JSON.stringify(workouts));
+  buildWeekStrip();renderWorkoutList();renderPackList();renderEveningPrep();renderStretches();
+  showToast('schedule applied');
+}
+
+function clearSchedule(){
+  const today=new Date(), start=new Date(today); start.setDate(today.getDate()-today.getDay());
+  for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);delete workouts[dayKey(d)];}
+  localStorage.setItem('dr_workouts',JSON.stringify(workouts));
+  buildWeekStrip();renderWorkoutList();renderPackList();renderEveningPrep();renderStretches();
+  showToast('week cleared');
+}
+
+// ═══════ CUSTOM STRETCHES ═══════
+function addCustomStretch(){
+  const nameEl=document.getElementById('customStretchName'), holdEl=document.getElementById('customStretchHold');
+  const name=nameEl.value.trim(), hold=holdEl.value.trim()||'30s';
+  if(!name){showToast('enter a stretch name');return;}
+  customStretches.push({t:name,h:hold});
+  localStorage.setItem('dr_custom_stretches',JSON.stringify(customStretches));
+  nameEl.value='';holdEl.value='';renderStretches();showToast('stretch added');
+}
+
+function deleteCustomStretch(i){
+  customStretches.splice(i,1);
+  localStorage.setItem('dr_custom_stretches',JSON.stringify(customStretches));
+  renderStretches();
 }
 
 // ═══════ NOTIFICATIONS ═══════
@@ -813,12 +930,12 @@ function scheduleNotification() {
 
 function sendMorningNotification() {
   if (Notification.permission !== 'granted') return;
-  const intention = intentions[todayIntentionKey()];
+  const pending = (todos[todayTodoKey()]||[]).filter(t=>!t.done).map(t=>t.text);
   const today = new Date();
   const tKey = dayKey(today);
   const w = workouts[tKey];
   let body = '';
-  if (intention) body += `✦ ${intention}\n`;
+  if (pending.length) body += `✦ ${pending.join(' / ')}\n`;
   if (w && w.types.length) body += `🏋️ Today: ${w.types.join(' + ')}`;
   else body += '🌿 Rest day — recovery is part of the work.';
   if (weatherData) body += `\n${WMO_ICONS[weatherData.code]||'🌤'} ${weatherData.temp}°F, ${WMO_CODES[weatherData.code]||''}`;
@@ -844,7 +961,7 @@ document.getElementById('notifTime').addEventListener('change', function() {
 function showToast(msg,dur=2600){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
 
 // ═══════ INIT ═══════
-loadTodayIntention();
+loadTodos();
 buildWeekStrip();
 renderWorkoutList();
 renderPackList();
