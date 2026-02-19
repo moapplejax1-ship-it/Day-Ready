@@ -179,6 +179,35 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .page-bottom { height: 24px; }
 .toast { position: fixed; bottom: calc(var(--safe-bot) + 72px); left: 50%; transform: translateX(-50%) translateY(16px); background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; padding: 9px 18px; font-family: 'DM Mono', monospace; font-size: 0.75rem; font-weight: 400; color: var(--text); pointer-events: none; opacity: 0; transition: all 0.28s ease; white-space: nowrap; z-index: 999; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.stretch-section { margin-bottom: 24px; }
+.stretch-section-title { font-family: 'DM Sans', sans-serif; font-size: 0.6rem; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+.stretch-item { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid rgba(42,42,42,0.5); cursor: pointer; -webkit-user-select: none; user-select: none; }
+.stretch-item:last-child { border-bottom: none; }
+.stretch-item:active { opacity: 0.7; }
+.stretch-check { width: 16px; height: 16px; border-radius: 2px; border: 1px solid var(--border2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 0.6rem; color: transparent; }
+.stretch-item.checked .stretch-check { background: var(--green); border-color: var(--green); color: var(--bg); }
+.stretch-item.checked .stretch-text { text-decoration: line-through; color: var(--text3); }
+.stretch-emoji { font-size: 0.95rem; }
+.stretch-text { font-size: 0.82rem; color: var(--text2); flex: 1; font-weight: 300; }
+.stretch-hold { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--text3); font-weight: 300; flex-shrink: 0; }
+.calc-card { border-bottom: 1px solid var(--border); padding: 0 0 20px 0; margin-bottom: 20px; animation: fadeIn 0.4s ease backwards; }
+.calc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.calc-title { font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 400; color: var(--text2); }
+.calc-form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.calc-field { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.calc-label { font-family: 'DM Mono', monospace; font-size: 0.55rem; font-weight: 400; letter-spacing: 0.06em; text-transform: lowercase; color: var(--text3); }
+.calc-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; font-family: 'DM Mono', monospace; font-size: 0.85rem; font-weight: 300; color: var(--text); outline: none; transition: border-color 0.2s; }
+.calc-input:focus { border-color: var(--accent); }
+.calc-select { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; font-family: 'DM Mono', monospace; font-size: 0.82rem; font-weight: 300; color: var(--text); outline: none; -webkit-appearance: none; appearance: none; cursor: pointer; transition: border-color 0.2s; }
+.calc-select:focus { border-color: var(--accent); }
+.calc-result { margin-top: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; display: none; animation: fadeIn 0.3s ease; }
+.calc-result.visible { display: block; }
+.calc-result-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+.calc-result-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+.calc-result-label { font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 300; color: var(--text2); }
+.calc-result-val { font-family: 'DM Mono', monospace; font-size: 0.9rem; font-weight: 400; color: var(--accent); }
+.calc-result-val.green { color: var(--green); }
+.calc-activity-note { margin-top: 10px; font-family: 'DM Mono', monospace; font-size: 0.68rem; font-weight: 300; color: var(--text3); line-height: 1.5; }
 
 </style>
 </head>
@@ -303,6 +332,41 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
       <div class="page-bottom"></div>
     </div>
 
+    <!-- BODY -->
+    <div class="page" id="page-body">
+      <div class="page-header"><div><div class="page-title">Body</div><div class="page-subtitle">stretch &amp; fuel</div></div></div>
+
+      <div class="section-label" style="margin-top:0;">Daily Stretches</div>
+      <div id="stretchContent"></div>
+
+      <div class="section-label">Calorie Calculator</div>
+      <div class="calc-card">
+        <div class="calc-header"><div class="calc-title">Your Profile</div></div>
+        <div class="calc-form-row">
+          <div class="calc-field"><label class="calc-label">sex</label><select class="calc-select" id="calcSex"><option value="male">Male</option><option value="female">Female</option></select></div>
+          <div class="calc-field"><label class="calc-label">age</label><input class="calc-input" id="calcAge" type="number" min="1" max="120" placeholder="25"></div>
+        </div>
+        <div class="calc-form-row">
+          <div class="calc-field"><label class="calc-label">weight (lbs)</label><input class="calc-input" id="calcWeight" type="number" min="1" max="999" placeholder="160"></div>
+        </div>
+        <div class="calc-form-row">
+          <div class="calc-field"><label class="calc-label">height (ft)</label><input class="calc-input" id="calcHeightFt" type="number" min="1" max="8" placeholder="5"></div>
+          <div class="calc-field"><label class="calc-label">height (in)</label><input class="calc-input" id="calcHeightIn" type="number" min="0" max="11" placeholder="10"></div>
+        </div>
+        <div class="calc-form-row">
+          <div class="calc-field"><label class="calc-label">activity level</label><select class="calc-select" id="calcActivity"><option value="1.2">Sedentary (little / no exercise)</option><option value="1.375">Lightly active (1–3 days / week)</option><option value="1.55">Moderately active (3–5 days / week)</option><option value="1.725">Very active (6–7 days / week)</option><option value="1.9">Extra active (intense / physical job)</option></select></div>
+        </div>
+        <div style="margin-top:14px;"><button class="btn btn-save" onclick="calculateCalories()" style="width:100%;">Calculate</button></div>
+        <div class="calc-result" id="calcResult">
+          <div class="calc-result-row"><span class="calc-result-label">Basal Metabolic Rate</span><span class="calc-result-val" id="calcBMR">—</span></div>
+          <div class="calc-result-row"><span class="calc-result-label">Daily Calories (TDEE)</span><span class="calc-result-val green" id="calcTDEE">—</span></div>
+          <div class="calc-activity-note" id="calcNote"></div>
+        </div>
+      </div>
+
+      <div class="page-bottom"></div>
+    </div>
+
   </div>
 
   <div class="tab-bar">
@@ -310,6 +374,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
     <button class="tab" onclick="switchTab('plan',this);buildPlanPage();"><span class="tab-icon">📅</span>Plan</button>
     <button class="tab" onclick="switchTab('workouts',this)"><span class="tab-icon">🏃</span>Train</button>
     <button class="tab" onclick="switchTab('pack',this)"><span class="tab-icon">🎒</span>Pack</button>
+    <button class="tab" onclick="switchTab('body',this);renderStretches();"><span class="tab-icon">🤸</span>Body</button>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -582,6 +647,90 @@ function renderPackList(){
   content.innerHTML=keys.map(key=>{const w=workouts[key];const [yr,mo,dt]=key.split('-').map(Number);const d=new Date(yr,mo,dt);const allItems=[...BASE_PACK];w.types.forEach(type=>{(PACK_MAP[type]||[]).forEach(item=>{if(!allItems.find(i=>i.t===item.t))allItems.push(item);});});return `<div class="pack-section"><div class="pack-section-header"><div class="pack-section-day">${DAYS_LONG[d.getDay()]}, ${d.getDate()}</div><div class="pack-section-types">${w.types.map(t=>`<span class="chip green" style="font-size:0.65rem;">${t}</span>`).join('')}</div></div>${allItems.map(item=>`<div class="pack-item" onclick="this.classList.toggle('checked')"><div class="pack-check">✓</div><span class="pack-item-emoji">${item.e}</span><span class="pack-item-text">${item.t}</span></div>`).join('')}</div>`;}).join('');
 }
 
+// ═══════ STRETCHES ═══════
+const STRETCH_MAP={
+  General:[{e:'🙆',t:'Neck rolls — slowly circle each direction',h:'30s each'},{e:'🤷',t:'Shoulder rolls — forward then backward',h:'30s each'},{e:'🐱',t:'Cat-cow — arch and round your back',h:'30s'},{e:'🔄',t:'Seated spinal twist — both sides',h:'20s each'},{e:'🙇',t:'Standing forward fold — hang loose',h:'30s'},{e:'🦵',t:'Figure-four stretch — each leg',h:'20s each'}],
+  Run:[{e:'🦵',t:'Standing quad stretch — each leg',h:'30s each'},{e:'🦶',t:'Calf stretch against a wall — each side',h:'30s each'},{e:'🧎',t:'Kneeling hip flexor stretch — each side',h:'30s each'},{e:'🦿',t:'Standing hamstring stretch — each leg',h:'30s each'},{e:'🏃',t:'IT band stretch — cross-leg lean each side',h:'20s each'}],
+  Lift:[{e:'💪',t:'Cross-body shoulder stretch — each arm',h:'20s each'},{e:'🙆',t:'Chest doorway stretch — both arms',h:'30s'},{e:'🤸',t:'Lat stretch — side lean each way',h:'20s each'},{e:'💪',t:'Tricep overhead stretch — each arm',h:'20s each'},{e:'🤲',t:'Wrist circles — both directions',h:'20s each'}],
+  Bike:[{e:'🦵',t:'Standing quad stretch — each leg',h:'30s each'},{e:'🧎',t:'Kneeling hip flexor stretch — each side',h:'30s each'},{e:'🦶',t:'Calf stretch against a wall — each side',h:'30s each'},{e:'🙇',t:'Seated lower back stretch — fold forward',h:'30s'},{e:'🙆',t:'Neck side tilts — each direction',h:'20s each'}],
+  Swim:[{e:'🔄',t:'Arm circles — small to large both ways',h:'30s each'},{e:'🙆',t:'Chest opener stretch — clasp hands behind',h:'30s'},{e:'🧎',t:'Kneeling hip flexor stretch — each side',h:'30s each'},{e:'🦶',t:'Ankle circles — each direction',h:'20s each'},{e:'💪',t:'Cross-body shoulder stretch — each arm',h:'20s each'}],
+  Yoga:[{e:'🧒',t:'Child\'s pose — reach arms forward',h:'45s'},{e:'🐕',t:'Downward dog — pedal feet gently',h:'30s'},{e:'🐍',t:'Cobra stretch — gentle back extension',h:'20s'},{e:'🧘',t:'Pigeon pose — each side',h:'30s each'},{e:'🙇',t:'Standing forward fold — hang loose',h:'30s'}],
+  HIIT:[{e:'🚶',t:'Walking lunges — dynamic warm-up',h:'10 each'},{e:'🔄',t:'Arm circles — forward and backward',h:'20s each'},{e:'🔄',t:'Hip circles — each direction',h:'20s each'},{e:'🦶',t:'Ankle rotations — each foot',h:'15s each'},{e:'🦵',t:'Leg swings — front to back each leg',h:'15s each'}],
+  Walk:[{e:'🦶',t:'Calf stretch against a wall — each side',h:'30s each'},{e:'🦵',t:'Standing quad stretch — each leg',h:'30s each'},{e:'🔄',t:'Hip circles — each direction',h:'20s each'},{e:'🦶',t:'Ankle rotations — each foot',h:'15s each'}],
+  Sport:[{e:'🚶',t:'Walking lunges — dynamic warm-up',h:'10 each'},{e:'🦵',t:'Leg swings — front to back each leg',h:'15s each'},{e:'🔄',t:'Arm circles — forward and backward',h:'20s each'},{e:'🧎',t:'Kneeling hip flexor stretch — each side',h:'30s each'},{e:'🦵',t:'Standing hamstring stretch — each leg',h:'20s each'}],
+  Ruck:[{e:'🧎',t:'Kneeling hip flexor stretch — each side',h:'30s each'},{e:'🦶',t:'Calf stretch against a wall — each side',h:'30s each'},{e:'🤷',t:'Shoulder rolls — forward then backward',h:'30s each'},{e:'🙇',t:'Seated lower back stretch — fold forward',h:'30s'},{e:'🦵',t:'Standing quad stretch — each leg',h:'30s each'}]
+};
+
+function renderStretches(){
+  const content=document.getElementById('stretchContent');
+  const today=new Date(), tKey=dayKey(today), w=workouts[tKey];
+  let html='';
+  if(w&&w.types.length){
+    w.types.forEach(type=>{
+      const stretches=STRETCH_MAP[type];
+      if(!stretches)return;
+      html+=`<div class="stretch-section"><div class="stretch-section-title">${type} Stretches</div>`;
+      html+=stretches.map(s=>`<div class="stretch-item" onclick="this.classList.toggle('checked')"><div class="stretch-check">✓</div><span class="stretch-emoji">${s.e}</span><span class="stretch-text">${s.t}</span><span class="stretch-hold">${s.h}</span></div>`).join('');
+      html+=`</div>`;
+    });
+  }
+  html+=`<div class="stretch-section"><div class="stretch-section-title">${w&&w.types.length?'General Recovery':'Daily Stretch Routine'}</div>`;
+  html+=STRETCH_MAP.General.map(s=>`<div class="stretch-item" onclick="this.classList.toggle('checked')"><div class="stretch-check">✓</div><span class="stretch-emoji">${s.e}</span><span class="stretch-text">${s.t}</span><span class="stretch-hold">${s.h}</span></div>`).join('');
+  html+=`</div>`;
+  content.innerHTML=html;
+}
+
+// ═══════ CALORIE CALCULATOR ═══════
+function loadCalcProfile(){
+  try{
+    const p=JSON.parse(localStorage.getItem('dr_calc_profile')||'null');
+    if(!p)return;
+    if(p.sex)document.getElementById('calcSex').value=p.sex;
+    if(p.age)document.getElementById('calcAge').value=p.age;
+    if(p.weight)document.getElementById('calcWeight').value=p.weight;
+    if(p.heightFt)document.getElementById('calcHeightFt').value=p.heightFt;
+    if(p.heightIn)document.getElementById('calcHeightIn').value=p.heightIn;
+    if(p.activity)document.getElementById('calcActivity').value=p.activity;
+  }catch(_){}
+  autoDetectActivity();
+}
+
+function autoDetectActivity(){
+  const today=new Date(), start=new Date(today); start.setDate(today.getDate()-today.getDay());
+  let count=0;
+  for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);if(workouts[dayKey(d)])count++;}
+  const sel=document.getElementById('calcActivity');
+  if(count===0)sel.value='1.2';
+  else if(count<=2)sel.value='1.375';
+  else if(count<=4)sel.value='1.55';
+  else if(count<=6)sel.value='1.725';
+  else sel.value='1.9';
+}
+
+function calculateCalories(){
+  const sex=document.getElementById('calcSex').value;
+  const age=parseInt(document.getElementById('calcAge').value);
+  const weightLbs=parseFloat(document.getElementById('calcWeight').value);
+  const htFt=parseInt(document.getElementById('calcHeightFt').value)||0;
+  const htIn=parseInt(document.getElementById('calcHeightIn').value)||0;
+  const activity=parseFloat(document.getElementById('calcActivity').value);
+  if(!age||!weightLbs||(!htFt&&!htIn)){showToast('fill in all fields');return;}
+  const weightKg=weightLbs*0.453592;
+  const heightCm=(htFt*12+htIn)*2.54;
+  let bmr;
+  if(sex==='male')bmr=10*weightKg+6.25*heightCm-5*age+5;
+  else bmr=10*weightKg+6.25*heightCm-5*age-161;
+  const tdee=Math.round(bmr*activity);
+  bmr=Math.round(bmr);
+  document.getElementById('calcBMR').textContent=`${bmr.toLocaleString()} cal`;
+  document.getElementById('calcTDEE').textContent=`${tdee.toLocaleString()} cal`;
+  const labels={'1.2':'sedentary','1.375':'lightly active','1.55':'moderately active','1.725':'very active','1.9':'extra active'};
+  document.getElementById('calcNote').textContent=`Based on ${labels[String(activity)]||'your'} activity level (×${activity}). BMR is calories at rest — TDEE accounts for your physical activity.`;
+  document.getElementById('calcResult').classList.add('visible');
+  localStorage.setItem('dr_calc_profile',JSON.stringify({sex,age,weight:weightLbs,heightFt:htFt,heightIn:htIn,activity:String(activity)}));
+  showToast('calories calculated');
+}
+
 // ═══════ NOTIFICATIONS ═══════
 let notifTimer = null;
 
@@ -700,6 +849,8 @@ buildWeekStrip();
 renderWorkoutList();
 renderPackList();
 renderEveningPrep();
+renderStretches();
+loadCalcProfile();
 loadNotifSettings();
 if('geolocation' in navigator) loadWeather();
 else document.querySelector('.weather-loading').innerHTML='<span style="color:var(--red);font-size:0.78rem;">⚠ Location not available.</span>';
